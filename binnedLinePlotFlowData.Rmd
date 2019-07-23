@@ -1,0 +1,28 @@
+---
+title: "codeSample"
+output: html_document
+---
+
+This is a sample of how I imported and cleaned data from a biological experiment in my research using R.
+
+To contextualize the data I will clean and eventually plot, a bit about the experiment itself: I studied cancer biology, and one thing my lab wanted to understand was how different mutations within a protein called Ras affected how "active" a cell becomes. To this end, using various lab techniques, I introduced the protein carrying a single 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
