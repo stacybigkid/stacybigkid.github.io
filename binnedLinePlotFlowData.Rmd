@@ -1,28 +1,260 @@
 ---
-title: "codeSample"
-output: html_document
+title: "How to generate a binned line plot from flow cytometry data using R"
+output: 
+  html_document: 
+    highlight: tango
+    theme: spacelab
 ---
-
-This is a sample of how I imported and cleaned data from a biological experiment in my research using R.
-
-To contextualize the data I will clean and eventually plot, a bit about the experiment itself: I studied cancer biology, and one thing my lab wanted to understand was how different mutations within a protein called Ras affected how "active" a cell becomes. To this end, using various lab techniques, I introduced the protein carrying a single 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+require(ggplot2)
+require(dplyr)
+library(gridExtra)
+library(grid)
+library(lattice)
 ```
 
-## R Markdown
+##The problem with the dot plot
 
+Data produced from a dual-color flow cytometry experiment typically look like the scatter plots below, where one dot represents one cell, and x- and y-axes represent features of interest within each cell. 
 
-```{r cars}
-summary(cars)
+```{r generate scatter plot, echo=FALSE, message=FALSE, warning=FALSE}
+dat1 = read.csv('control.csv')
+ggplot(dat1, aes(x = log10(dat1$FITC.A), y = log10(dat1$APC.A))) + 
+  geom_bin2d(bins = 150) +
+  ylim(0, 5) +
+  xlim(0, 5) +
+  xlab('feature 1') +
+  ylab('feature 2') -> p1
+
+dat2 = read.csv('experimentalSample1.csv')
+ggplot(dat2, aes(x = log10(dat2$FITC.A), y = log10(dat2$APC.A))) +
+  geom_bin2d(bins = 150) +
+  ylim(0, 5) +
+  xlim(0, 5) +
+  xlab('feature 1') +
+  ylab('feature 2') -> p2
+
+dat3 = read.csv('experimentalSample2.csv')
+ggplot(dat3, aes(x = log10(dat3$FITC.A), y = log10(dat3$APC.A))) +
+  geom_bin2d(bins = 150) +
+  ylim(0, 5) +
+  xlim(0, 5) +
+  xlab('feature 1') +
+  ylab('feature 2') -> p3
+
+grid.arrange(p1, p2, p3, ncol = 2)
 ```
 
-## Including Plots
+While this can be a helpful way to understand the relationship between the two features within a cell, it's difficult to interpret small changes between samples with side-by-side scatter plots. 
 
+To facilitate comparison of multiple samples by plotting them on a single graph, I composed the code below to import, clean, and plot data accordingly.
 
+## But first, libraries
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+ggplot2 and dplyr libraries are from the 'Tidyverse' package in R and will be necessary later when we plot the data.
+
+```{r libraries, message=FALSE, warning=FALSE}
+library(ggplot2) # generates different types of plots
+library(dplyr) # facilitates manipulation of dataframes
 ```
 
+## Importing the data
+
+Here, I assume that the data are already in CSV format. (If not, you might have to open your FCS file in FlowJo or FACSDiva software and export it to a CSV for this step!)
+
+```{r import}
+# assign the data within your csv to an intuitive variable name
+control = read.csv('control.csv') # negative control data that should not show signal in the y axis
+protein1 = read.csv('experimentalSample1.csv') # experimental sample 1
+protein2 = read.csv('experimentalSample2.csv') # experimental sample 2
+```
+
+## Parameters typically recorded in each flow experiment 
+
+Those familiar with flow cytometry will recognize the column headings below. 
+
+```{r view head of protein2 dataset}
+# view a sample dataset
+head(protein2)
+```
+
+For the uninitiated, the labels translate to the following cellular features:
+
+* __FSC__ = forward scatter, which tells us about each cell's size
+* __SSC__ = side scatter, which tells us about each cell's granularity
+* __APC__ = some feature of interest that the experimenter has chosen to make detectable using a fluorescent marker, which emits signal at ~660 nm
+* __FITC__ = same as APC, except its emission wavelength is around ~520 nm 
+* __Time__ = The time (in seconds) each cell passed through the laser, generating the data above
+
+* __.A__ refers to the area under the fluorescent curve generated from each event (i.e. each cell) and tells us how intense the signal for each parameters was 
+* __.W__ refers to the width of the fluorescent curve generate from each event and plays a role in what's called a "gating" process, which isn't covered here 
+
+##Subsetting the data of interest
+
+My experimental question was: Relative to the control protein ("control"), does protein 1 ("protein1") or protein 2 ("protein2") induce more proliferative signal within each cell?
+
+As alluded to above, I'm particularly interested in the APC and FITC columns. In my case, FITC measurements tell me how abundant a protein of interest is in each cell. A more intense FITC reading therefore means that cell contains a higher number of that specific protein. 
+
+The APC-labelled feature provides information about each cell's intracellular signaling activity. An intense reading here means that the cell is receiving a lot of signal to divide and proliferate (think cancer).
+
+Now that the data are imported, I want to extract the columns containing experimental information: 
+
+```{r generate dataframe containing only data of interest: FITC.A, APC.A}
+# generates a new variable containing a dataframe of only FITC and APC columns
+controlDat = subset(control, select = c('FITC.A', 'APC.A'))
+protein1Dat = subset(protein1, select = c('FITC.A', 'APC.A'))
+protein2Dat = subset(protein2, select = c('FITC.A', 'APC.A'))
+```
+
+##Clean it up
+
+After subsetting the features of interest into a new dataframe, I want to view summary statistics of each parameter in my experiment to get an idea of the quality of the data.
+
+```{r view summary statistics of protein2 dataset}
+# compute summary statistics of each column within the specified sample dataframe
+summary(protein2Dat) 
+```
+
+In evaluating these statistics, I can see that both FITC and APC data 'min' values are negative, implying the datasets contain negative, and possibly 0 values. Because flow data are generally reported on a log scale, I want to clean the data of these values to prevent generating an error when applying a log transform: 
+
+_Note: there are a number of ways to handle NA values, including imputation. However, removal is sufficient for my purposes._ 
+
+```{r replace neg and 0 values with NA, remove rows containing NA}
+# combine dataframes of the three samples into a list
+datasets <- list(control = controlDat, protein1 = protein1Dat, protein2 = protein2Dat)
+
+# generate a new variable where negative and 0 values within each dataframe in datasets have been removed
+datasets.clean <- lapply(datasets, function(dataset) { 
+  dataset[dataset <= 0] <- NA 
+  dataset <- na.omit(dataset) 
+})
+```
+
+###Double check
+
+I confirm that only non-negative data remain by again viewing summary statistics of the three samples:
+
+```{r}
+# compute example of summary statistics to confirm removal of negative/0 data
+summary(datasets.clean[["protein2"]]) 
+```
+
+##Transform the data
+
+Minimum values of both FITC and APC data are now positive numbers!
+
+In the next step, I will log transform each value, as that is the scale I want to use when visualizing the data; this is standard for flow cytometry data:
+
+```{r log transform}
+# calculates log10 of each value in the current dataset
+datasets.clean.log <- lapply(datasets.clean, function(dataset) { 
+  log10(dataset) 
+})
+```
+
+##A function to bin values along the x axis and calculate the mean of corresponding y axis values
+
+Now that the data have been transformed, it's time to bin the values and calculate the means of each bin. 
+
+Because I want to know how protein abundance (FITC data, x-axis) relate to intracellular activity (APC data, y-axis), I will bin the values according to FITC intensity and calculate the mean of the corresponding APC values using a custom function:
+
+_Note: the current version of this function does not include error handling! To successfully implement the code below on your data, ensure the 'dataset' passed into the function is a dataframe where desired x-axis data are in column 1 and desired y-axis data are in column 2._
+```{r bin data according to x intensity, compute mean of corresponding y values}
+  binnedMeans <- function(dataset, binwidth) {
+    
+    # assign column 1 data to x; column 2 data to y
+    x <- dataset %>% select(1) 
+    y <- dataset %>% select(2) 
+    
+    # generate vector of values from 0 to maximum x  
+    bins <- seq(from = 0, to = max(x), by = binwidth); 
+    
+    # initiate empty vectors into which values calculated within for loop below will be passed
+    x_bin <- vector("numeric", 100);   
+    x_n <- vector("numeric", 100); 
+    y_means <- vector("numeric", 100);  
+    y_SEMs <- vector("numeric", 100); 
+    
+    count <- 1
+
+    for(bin in bins) { 
+  
+      # locate and count x values within specified bin
+      x_values <- x > bin & x <= (bin + binwidth); 
+      x_n[count] <- sum(x_values); 
+  
+      # calculate and store mean of y values corresponding to 'x_values'
+      y_mean <- mean(y[x_values]);
+      y_means[count] <- y_mean; 
+      
+      # calculate and store SEM of y values corresponding to 'x_values'
+      y_SEM <- sd(y[x_values]) / sqrt(sum(x_values)); 
+      y_SEMs[count] <- y_SEM;
+      
+      # record bin + binwidth for use in plotting
+      x_bin[count] <- bin + binwidth; 
+      
+      bin <- bin + binwidth; 
+      count <- count + 1; 
+    }
+    # generate dataframe with values calculated above, remove any rows containing '0'
+    output <- data.frame(x_bin, x_n, y_means, y_SEMs) 
+    output$y_means[output$y_means == 0] <- NA; 
+    final.output <- output[!is.na(output$y_means), ]
+    return(final.output)
+}
+```
+
+###Execute the new function on three dataframes
+
+Having prepared the function above, I will apply it to each of the datasets of interest using lapply: 
+
+```{r apply function}
+# apply function written above to each sample dataframe
+binned.data <- lapply(datasets.clean.log, function(dataset) {
+    binnedMeans(dataset, 0.5)
+})
+```
+
+##Convert the data to long format for dplyr and ggplot manipulation
+
+Now that we have the infomation we want to plot, time to get it easily plottable (pretty sure that's a word) format.
+
+```{r mutate Sample}
+# add column to each dataset specifying sample
+controlDatFinal <- mutate(binned.data[["control"]], Sample = "Control")
+protein1DatFinal <- mutate(binned.data[["protein1"]], Sample = "Protein 1")
+protein2DatFinal <- mutate(binned.data[["protein2"]], Sample = "Protein 2")
+
+# concatenate data into single dataframe
+longDat <- rbind(controlDatFinal, protein1DatFinal, protein2DatFinal)
+```
+
+##Visualize 
+
+Time to plot our results!:
+
+```{r plot}
+# order samples as desired to appear in legend
+longDat$Sample <- factor(longDat$Sample, levels = c("Protein 2", "Protein 1", "Control"))
+
+# specify colors to be assigned to samples, ordered as specified above
+sampleColors = c("steelblue4", "steelblue3", "steelblue1")
+
+# plot the data
+ ggplot(data = longDat, aes(x = x_bin, y = y_means, color = Sample)) +  
+   scale_color_manual(values = sampleColors) +
+   geom_errorbar(aes(ymin = y_means - y_SEMs, ymax = y_means + y_SEMs), width = .1) +  
+   geom_line(aes(group = Sample)) + geom_point(size = 0.5) +
+   ggtitle("The effect of protein abundance on intracellular signaling activity") +
+   xlim(0, 5.5) +
+   ylim(1.5, 3) + 
+   xlab("Protein Abundance") +
+   ylab("Intracellular Signaling Activity") 
+```
+
+Voilà! Now you can easily see the difference in these three samples using a single graph! 
+
+The control looks like it doesn't "activate" intracellular signaling, whereas the experimental proteins are able to induce signaling within a certain range. 
