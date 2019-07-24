@@ -240,21 +240,21 @@ summary {
 <div id="but-first-libraries" class="section level2">
 <h2>But first, libraries</h2>
 <p>ggplot2 and dplyr libraries are from the ‘Tidyverse’ package in R and will be necessary later when we plot the data.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(ggplot2) <span class="co">#generates different types of plots</span>
-<span class="kw">library</span>(dplyr) <span class="co">#facilitates manipulation of dataframes</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(ggplot2) <span class="co"># generates different types of plots</span>
+<span class="kw">library</span>(dplyr) <span class="co"># facilitates manipulation of dataframes</span></code></pre></div>
 </div>
 <div id="importing-the-data" class="section level2">
 <h2>Importing the data</h2>
 <p>Here, I assume that the data are already in CSV format. (If not, you might have to open your FCS file in FlowJo or FACSDiva software and export it to a CSV for this step!)</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#assign the data within your csv to an intuitive variable name</span>
-control =<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">'control.csv'</span>) <span class="co">#negative control data that should not show signal in the y axis</span>
-protein1 =<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">'experimentalSample1.csv'</span>) <span class="co">#experimental sample 1</span>
-protein2 =<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">'experimentalSample2.csv'</span>) <span class="co">#experimental sample 2</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># assign the data within your csv to an intuitive variable name</span>
+control =<span class="st"> </span><span class="kw">read.csv</span>( <span class="st">'control.csv'</span> ) <span class="co"># negative control data that should not show signal in the y axis</span>
+protein1 =<span class="st"> </span><span class="kw">read.csv</span>( <span class="st">'experimentalSample1.csv'</span> ) <span class="co"># experimental sample 1</span>
+protein2 =<span class="st"> </span><span class="kw">read.csv</span>( <span class="st">'experimentalSample2.csv'</span> ) <span class="co"># experimental sample 2</span></code></pre></div>
 </div>
 <div id="parameters-typically-recorded-in-each-flow-experiment" class="section level2">
 <h2>Parameters typically recorded in each flow experiment</h2>
 <p>Those familiar with flow cytometry will recognize the column headings below.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#view a sample dataset</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># view a sample dataset</span>
 <span class="kw">head</span>(protein2)</code></pre></div>
 <pre><code>##      FSC.A    FSC.W    SSC.A  SSC.W   APC.A  FITC.A     Time
 ## 1 128578.0  97711.8  71490.7 101513   95.20    4.48 0.553077
@@ -280,15 +280,15 @@ protein2 =<span class="st"> </span><span class="kw">read.csv</span>(<span class=
 <p>As alluded to above, I’m particularly interested in the APC and FITC columns. In my case, FITC measurements tell me how abundant a protein of interest is in each cell. A more intense FITC reading therefore means that cell contains a higher number of that specific protein.</p>
 <p>The APC-labelled feature provides information about each cell’s intracellular signaling activity. An intense reading here means that the cell is receiving a lot of signal to divide and proliferate (think cancer).</p>
 <p>Now that the data are imported, I want to extract the columns containing experimental information:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#generates a new variable containing a dataframe of only FITC and APC columns</span>
-controlDat =<span class="st"> </span><span class="kw">subset</span>(control, <span class="dt">select =</span> <span class="kw">c</span>(<span class="st">'FITC.A'</span>,<span class="st">'APC.A'</span>))
-protein1Dat =<span class="st"> </span><span class="kw">subset</span>(protein1, <span class="dt">select =</span> <span class="kw">c</span>(<span class="st">'FITC.A'</span>,<span class="st">'APC.A'</span>))
-protein2Dat =<span class="st"> </span><span class="kw">subset</span>(protein2, <span class="dt">select =</span> <span class="kw">c</span>(<span class="st">'FITC.A'</span>,<span class="st">'APC.A'</span>))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># generates a new variable containing a dataframe of only FITC and APC columns</span>
+controlDat =<span class="st"> </span><span class="kw">subset</span>(control, <span class="dt">select =</span> <span class="kw">c</span>(<span class="st">'FITC.A'</span>, <span class="st">'APC.A'</span>))
+protein1Dat =<span class="st"> </span><span class="kw">subset</span>(protein1, <span class="dt">select =</span> <span class="kw">c</span>(<span class="st">'FITC.A'</span>, <span class="st">'APC.A'</span>))
+protein2Dat =<span class="st"> </span><span class="kw">subset</span>(protein2, <span class="dt">select =</span> <span class="kw">c</span>(<span class="st">'FITC.A'</span>, <span class="st">'APC.A'</span>))</code></pre></div>
 </div>
 <div id="clean-it-up" class="section level2">
 <h2>Clean it up</h2>
 <p>After subsetting the features of interest into a new dataframe, I want to view summary statistics of each parameter in my experiment to get an idea of the quality of the data.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#compute summary statistics of each column within the specified sample dataframe</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># compute summary statistics of each column within the specified sample dataframe</span>
 <span class="kw">summary</span>(protein2Dat) </code></pre></div>
 <pre><code>##      FITC.A             APC.A       
 ##  Min.   : -108.64   Min.   : -15.3  
@@ -299,10 +299,10 @@ protein2Dat =<span class="st"> </span><span class="kw">subset</span>(protein2, <
 ##  Max.   :48875.70   Max.   :5236.9</code></pre>
 <p>In evaluating these statistics, I can see that both FITC and APC data ‘min’ values are negative, implying the datasets contain negative, and possibly 0 values. Because flow data are generally reported on a log scale, I want to clean the data of these values to prevent generating an error when applying a log transform:</p>
 <p><em>Note: there are a number of ways to handle NA values, including imputation. However, removal is sufficient for my purposes.</em></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#combine dataframes of the three samples into a list</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># combine dataframes of the three samples into a list</span>
 datasets &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="dt">control =</span> controlDat, <span class="dt">protein1 =</span> protein1Dat, <span class="dt">protein2 =</span> protein2Dat)
 
-<span class="co">#generate a new variable where negative and 0 values within each dataframe in datasets have been removed</span>
+<span class="co"># generate a new variable where negative and 0 values within each dataframe in datasets have been removed</span>
 datasets.clean &lt;-<span class="st"> </span><span class="kw">lapply</span>(datasets, <span class="cf">function</span>(dataset) { 
   dataset[dataset <span class="op">&lt;=</span><span class="st"> </span><span class="dv">0</span>] &lt;-<span class="st"> </span><span class="ot">NA</span> 
   dataset &lt;-<span class="st"> </span><span class="kw">na.omit</span>(dataset) 
@@ -310,7 +310,7 @@ datasets.clean &lt;-<span class="st"> </span><span class="kw">lapply</span>(data
 <div id="double-check" class="section level3">
 <h3>Double check</h3>
 <p>I confirm that only non-negative data remains by again viewing summary statistics of the three samples:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#compute example of summary statistics to confirm removal of negative/0 data</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># compute example of summary statistics to confirm removal of negative/0 data</span>
 <span class="kw">summary</span>(datasets.clean[[<span class="st">&quot;protein2&quot;</span>]]) </code></pre></div>
 <pre><code>##      FITC.A             APC.A        
 ##  Min.   :    1.12   Min.   :   0.85  
@@ -325,7 +325,7 @@ datasets.clean &lt;-<span class="st"> </span><span class="kw">lapply</span>(data
 <h2>Transform the data</h2>
 <p>Minimum values of both FITC and APC data are now positive numbers!</p>
 <p>In the next step, I will log transform each value, as that is the scale I want to use when visualizing the data, as it is standard for flow cytometry data:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#calculates log10 of each value in the current dataset</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># calculates log10 of each value in the current dataset</span>
 datasets.clean.log &lt;-<span class="st"> </span><span class="kw">lapply</span>(datasets.clean, <span class="cf">function</span>(dataset) { 
   <span class="kw">log10</span>(dataset) 
 })</code></pre></div>
@@ -334,48 +334,45 @@ datasets.clean.log &lt;-<span class="st"> </span><span class="kw">lapply</span>(
 <h2>A function to bin values along the x axis and calculate the mean of corresponding y axis values</h2>
 <p>Now that the data have been transformed, it’s time to bin the values and calculate the means of each bin.</p>
 <p>Because I want to know how protein abundance (FITC data, x-axis) relate to intracellular activity (APC data, y-axis), I will bin the values according to FITC intensity and calculate the mean of the corresponding APC values using a custom function:</p>
-<p><em>Note: the current version of this function does not include error handling! To successfully implement the code below on your data, ensure the ‘dataset’ passed into the function is a dataframe where desired x-axis data are in column 1 and desired y-axis data are in column 2</em></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">  binnedMeans &lt;-<span class="st"> </span><span class="cf">function</span>(dataset, <span class="dt">binwidth=</span><span class="fl">0.5</span>) {
+<p><em>Note: the current version of this function does not include error handling! To successfully implement the code below on your data, ensure the ‘dataset’ passed into the function is a dataframe where desired x-axis data are in column 1 and desired y-axis data are in column 2.</em></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">  binnedMeans &lt;-<span class="st"> </span><span class="cf">function</span>(dataset, binwidth) {
     
-    <span class="co">#assign column 1 data to x; column 2 data to y</span>
+    <span class="co"># assign column 1 data to x; column 2 data to y</span>
     x &lt;-<span class="st"> </span>dataset <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(<span class="dv">1</span>) 
     y &lt;-<span class="st"> </span>dataset <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(<span class="dv">2</span>) 
     
-    <span class="co">#generate vector of values from 0 to maximum x  </span>
-    bins &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dt">from=</span><span class="dv">0</span>, <span class="dt">to=</span><span class="kw">max</span>(x), <span class="dt">by=</span>binwidth); 
+    <span class="co"># generate vector of values from 0 to maximum x  </span>
+    bins &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dt">from =</span> <span class="dv">0</span>, <span class="dt">to =</span> <span class="kw">max</span>(x), <span class="dt">by =</span> binwidth); 
     
-    <span class="co">#initiate empty vectors into which values calculated within for loop below      will be passed</span>
+    <span class="co"># initiate empty vectors into which values calculated within for loop below will be passed</span>
     x_bin &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">&quot;numeric&quot;</span>, <span class="dv">100</span>);   
     x_n &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">&quot;numeric&quot;</span>, <span class="dv">100</span>); 
     y_means &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">&quot;numeric&quot;</span>, <span class="dv">100</span>);  
     y_SEMs &lt;-<span class="st"> </span><span class="kw">vector</span>(<span class="st">&quot;numeric&quot;</span>, <span class="dv">100</span>); 
     
-    <span class="co">#initiate count</span>
     count &lt;-<span class="st"> </span><span class="dv">1</span>
-    
-    <span class="co">#initiate for loop</span>
+
     <span class="cf">for</span>(bin <span class="cf">in</span> bins) { 
   
-      <span class="co">#locate and count x values within specified bin</span>
-      x_values &lt;-<span class="st"> </span>x <span class="op">&gt;</span><span class="st"> </span>bin <span class="op">&amp;</span><span class="st"> </span>x <span class="op">&lt;=</span><span class="st"> </span>(bin<span class="op">+</span>binwidth); 
+      <span class="co"># locate and count x values within specified bin</span>
+      x_values &lt;-<span class="st"> </span>x <span class="op">&gt;</span><span class="st"> </span>bin <span class="op">&amp;</span><span class="st"> </span>x <span class="op">&lt;=</span><span class="st"> </span>(bin <span class="op">+</span><span class="st"> </span>binwidth); 
       x_n[count] &lt;-<span class="st"> </span><span class="kw">sum</span>(x_values); 
   
-      <span class="co">#calculate and store mean of y values corresponding to 'x_values'</span>
+      <span class="co"># calculate and store mean of y values corresponding to 'x_values'</span>
       y_mean &lt;-<span class="st"> </span><span class="kw">mean</span>(y[x_values]);
       y_means[count] &lt;-<span class="st"> </span>y_mean; 
       
-      <span class="co">#calculate and store SEM of y values corresponding to 'x_values'</span>
-      y_SEM &lt;-<span class="st"> </span><span class="kw">sd</span>(y[x_values])<span class="op">/</span><span class="kw">sqrt</span>(<span class="kw">sum</span>(x_values)); 
+      <span class="co"># calculate and store SEM of y values corresponding to 'x_values'</span>
+      y_SEM &lt;-<span class="st"> </span><span class="kw">sd</span>(y[x_values]) <span class="op">/</span><span class="st"> </span><span class="kw">sqrt</span>(<span class="kw">sum</span>(x_values)); 
       y_SEMs[count] &lt;-<span class="st"> </span>y_SEM; <span class="co">#store y SEM </span>
       
-      <span class="co">#record record bin+binwidth for use in plotting</span>
-      x_bin[count] &lt;-<span class="st"> </span>bin<span class="op">+</span>binwidth; 
+      <span class="co"># record bin + binwidth for use in plotting</span>
+      x_bin[count] &lt;-<span class="st"> </span>bin <span class="op">+</span><span class="st"> </span>binwidth; 
       
-      <span class="co">#advance bin and count</span>
-      bin &lt;-<span class="st"> </span>bin<span class="op">+</span>binwidth; 
-      count &lt;-<span class="st"> </span>count<span class="op">+</span><span class="dv">1</span>; 
+      bin &lt;-<span class="st"> </span>bin <span class="op">+</span><span class="st"> </span>binwidth; 
+      count &lt;-<span class="st"> </span>count <span class="op">+</span><span class="st"> </span><span class="dv">1</span>; 
     }
-    <span class="co">#generate dataframe with values calculated above, remove any rows containing '0'</span>
+    <span class="co"># generate dataframe with values calculated above, remove any rows containing '0'</span>
     output &lt;-<span class="st"> </span><span class="kw">data.frame</span>(x_bin, x_n, y_means, y_SEMs) 
     output<span class="op">$</span>y_means[output<span class="op">$</span>y_means <span class="op">==</span><span class="st"> </span><span class="dv">0</span>] &lt;-<span class="st"> </span><span class="ot">NA</span>; 
     final.output &lt;-<span class="st"> </span>output[<span class="op">!</span><span class="kw">is.na</span>(output<span class="op">$</span>y_means), ]
@@ -384,37 +381,37 @@ datasets.clean.log &lt;-<span class="st"> </span><span class="kw">lapply</span>(
 <div id="execute-the-new-function-on-three-dataframes" class="section level3">
 <h3>Execute the new function on three dataframes</h3>
 <p>Having prepared the function above, I will apply it to each of the datasets of interest using lapply:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#apply function written above to each sample dataframe</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># apply function written above to each sample dataframe</span>
 binned.data &lt;-<span class="st"> </span><span class="kw">lapply</span>(datasets.clean.log, <span class="cf">function</span>(dataset) {
-    <span class="kw">binnedMeans</span>(dataset, <span class="dt">binwidth =</span> <span class="fl">0.5</span>)
+    <span class="kw">binnedMeans</span>(dataset, <span class="fl">0.5</span>)
 })</code></pre></div>
 </div>
 </div>
 <div id="convert-the-data-to-long-format-for-dplyr-and-ggplot-manipulation" class="section level2">
 <h2>Convert the data to long format for dplyr and ggplot manipulation</h2>
 <p>Now that we have the infomation we want to plot, time to get it easily plottable (pretty sure that’s a word) format.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#add column to each dataset specifying sample</span>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># add column to each dataset specifying sample</span>
 controlDatFinal &lt;-<span class="st"> </span><span class="kw">mutate</span>(binned.data[[<span class="st">&quot;control&quot;</span>]], <span class="dt">Sample =</span> <span class="st">&quot;Control&quot;</span>)
 protein1DatFinal &lt;-<span class="st"> </span><span class="kw">mutate</span>(binned.data[[<span class="st">&quot;protein1&quot;</span>]], <span class="dt">Sample =</span> <span class="st">&quot;Protein 1&quot;</span>)
 protein2DatFinal &lt;-<span class="st"> </span><span class="kw">mutate</span>(binned.data[[<span class="st">&quot;protein2&quot;</span>]], <span class="dt">Sample =</span> <span class="st">&quot;Protein 2&quot;</span>)
 
-<span class="co">#concatenate data into single dataframe</span>
+<span class="co"># concatenate data into single dataframe</span>
 longDat &lt;-<span class="st"> </span><span class="kw">rbind</span>(controlDatFinal, protein1DatFinal, protein2DatFinal)</code></pre></div>
 </div>
 <div id="visualize" class="section level2">
 <h2>Visualize</h2>
-<p>All bound up! Time to use that ggplot2 library to make a figure:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#order samples as desired to appear in legend</span>
+<p>Time to plot our results!:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># order samples as desired to appear in legend</span>
 longDat<span class="op">$</span>Sample &lt;-<span class="st"> </span><span class="kw">factor</span>(longDat<span class="op">$</span>Sample, <span class="dt">levels =</span> <span class="kw">c</span>(<span class="st">&quot;Protein 2&quot;</span>, <span class="st">&quot;Protein 1&quot;</span>, <span class="st">&quot;Control&quot;</span>))
 
-<span class="co">#specify colors to be assigned to samples, ordered as specified above</span>
+<span class="co"># specify colors to be assigned to samples, ordered as specified above</span>
 sampleColors =<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;steelblue4&quot;</span>, <span class="st">&quot;steelblue3&quot;</span>, <span class="st">&quot;steelblue1&quot;</span>)
 
- <span class="co">#plot the data</span>
+<span class="co"># plot the data</span>
  <span class="kw">ggplot</span>(<span class="dt">data =</span> longDat, <span class="kw">aes</span>(<span class="dt">x =</span> x_bin, <span class="dt">y =</span> y_means, <span class="dt">color =</span> Sample)) <span class="op">+</span><span class="st">  </span>
-<span class="st">   </span><span class="kw">scale_color_manual</span>(<span class="dt">values=</span>sampleColors) <span class="op">+</span>
-<span class="st">   </span><span class="kw">geom_errorbar</span>(<span class="kw">aes</span>(<span class="dt">ymin=</span>y_means<span class="op">-</span>y_SEMs,<span class="dt">ymax=</span>y_means<span class="op">+</span>y_SEMs), <span class="dt">width=</span>.<span class="dv">1</span>)   <span class="op">+</span><span class="st">  </span>
-<span class="st">   </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">group =</span> Sample)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_point</span>(<span class="dt">size=</span><span class="fl">0.5</span>) <span class="op">+</span>
+<span class="st">   </span><span class="kw">scale_color_manual</span>(<span class="dt">values =</span> sampleColors) <span class="op">+</span>
+<span class="st">   </span><span class="kw">geom_errorbar</span>(<span class="kw">aes</span>(<span class="dt">ymin =</span> y_means <span class="op">-</span><span class="st"> </span>y_SEMs, <span class="dt">ymax =</span> y_means <span class="op">+</span><span class="st"> </span>y_SEMs), <span class="dt">width =</span> .<span class="dv">1</span>) <span class="op">+</span><span class="st">  </span>
+<span class="st">   </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">group =</span> Sample)) <span class="op">+</span><span class="st"> </span><span class="kw">geom_point</span>(<span class="dt">size =</span> <span class="fl">0.5</span>) <span class="op">+</span>
 <span class="st">   </span><span class="kw">ggtitle</span>(<span class="st">&quot;The effect of protein abundance on intracellular signaling activity&quot;</span>) <span class="op">+</span>
 <span class="st">   </span><span class="kw">xlim</span>(<span class="dv">0</span>, <span class="fl">5.5</span>) <span class="op">+</span>
 <span class="st">   </span><span class="kw">ylim</span>(<span class="fl">1.5</span>, <span class="dv">3</span>) <span class="op">+</span><span class="st"> </span>
